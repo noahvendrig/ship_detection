@@ -62,10 +62,11 @@ def create_images():
     if len(os.listdir(dir_yolo + "split_imgs") ) == 0:
         print("Directory is empty")
 
+
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-delete_dir()
-make_dir()
-create_images()
+# delete_dir()
+# make_dir()
+# create_images()
 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
@@ -83,7 +84,8 @@ colors = np.random.uniform(0, 255, size=(len(classes), 3))
 # Loading image :  
 # Image must be 16:9 aspect ratio !! maybe not actually?
 
-dir_analysed_imgs = dir_yolo + "analysed_imgs"
+dir_split_imgs = dir_yolo + "split_imgs"
+
 
 '''
 def img_analysis(img):
@@ -136,7 +138,7 @@ def img_analysis(img):
             # cv2.putText(img, label, (x, y + 30), font, 3, color, 3)    # Text is not enabled
 
 
-    cv2.imwrite(dir_analysed_imgs, img )
+    cv2.imwrite(dir_split_imgs, img )
 
 
 
@@ -145,14 +147,33 @@ def img_analysis(img):
     #cv2.waitKey(0)
 '''
 
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+import pathlib
+contents = pathlib.Path("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/split_imgs").iterdir()
+
+frame_number = 0
+zeroes = 5
+
+for filename in os.listdir(dir_split_imgs):
+    #img = cv2.imread(os.listdir(filename)) # original line
+
+    # img = cv2.imread(dir_yolo+"/split_imgs/frame00000.jpg")
+    #if (frame_number != 0):
+    #    zeroes = 5-len(str(frame_number))
+
+    # img = cv2.imread(dir_yolo+"split_imgs/frame"+str(zeroes)+str(frame_number)+".jpg")
+    filled_number = str(frame_number).zfill(zeroes)
+    f = dir_yolo+"split_imgs/frame"+str(filled_number)+".jpg"
+    img = cv2.imread(f)
+    
+    assert img is not None, "Image not loaded "+f
 
 
-for filename in os.listdir(dir_analysed_imgs): 
-    img = filename
-    #img = cv2.imread(dir_yolo+"/split_imgs/two-friends-sq.jpg")
+
     img = cv2.resize(img, None, fx=0.4, fy=0.4)
+    
     height, width, channels = img.shape
+
 
     # Detecting objects
     blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
@@ -198,9 +219,22 @@ for filename in os.listdir(dir_analysed_imgs):
             # cv2.putText(img, label, (x, y + 30), font, 3, color, 3)    # Text is not enabled
 
 
-    cv2.imwrite(dir_analysed_imgs, img )
+    #cv2.imwrite(dir_analysed_imgs, img )
 
+    currentFrame = frame_number
 
+    # Saves image of the current frame in jpg file
+    name = './analysed_imgs/analysed_frame' + str(currentFrame).zfill(zeroes) + '.jpg'
+    print ('Creating... ' + name, end='\r')
+    
+    cv2.imwrite(name, img)
+
+    frame_number += 1
+
+    # When everything done, release the capture
+    
+    cv2.destroyAllWindows()
+    print("Created Images ")
 
 
     #cv2.imshow("Image", img)  # Display image in a window, can be changed to save to a file
@@ -211,3 +245,5 @@ if len(os.listdir(dir_yolo + "analysed_imgs") ) == 0:
 
 
 cv2.destroyAllWindows()
+
+
