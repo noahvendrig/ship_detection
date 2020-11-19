@@ -71,7 +71,6 @@ def create_images():
 
 
 
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 if BOOL_DELETE_DIR:
     delete_dir()
 if BOOL_MAKE_DIR:    
@@ -79,11 +78,9 @@ if BOOL_MAKE_DIR:
 if BOOL_CREATE_IMAGES:
     create_images()
 
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-# Load Yolo
-#net = cv2.dnn.readNet(dir_yolo+"yolov3.weights", dir_yolo+"yolov3.cfg")
-net = cv2.dnn.readNet("D:/py/project/YOLO/" + "yolov3.weights", dir_yolo+"yolov3.cfg")
+# Load YOLO Model
+net = cv2.dnn.readNet("D:/py/project/YOLO/" + "yolov3.weights", dir_yolo+"yolov3.cfg") # load weights dir and configurations dir
 
 classes = []
 with open(dir_yolo+"coco.names", "r") as f:
@@ -93,18 +90,12 @@ output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # Loading image :  
-# Image must be 16:9 aspect ratio !! maybe not actually?
 
 dir_split_imgs = dir_yolo + "split_imgs"
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-import pathlib
-contents = pathlib.Path("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/split_imgs").iterdir()
-
 frame_number = 0
 
-
-#### ~~ADDING EACH ANALYSED FRAME TO THE OUTPUT (VIDEO)~~ ####
+# ADDING EACH ANALYSED FRAME TO THE OUTPUT (VIDEO)
 CODEC = "MJPG"
 assert len(CODEC)==4,"FOURCC code needs to have exactly four characters"
 fourcc = cv2.VideoWriter_fourcc(CODEC[0],CODEC[1],CODEC[2],CODEC[3])
@@ -112,9 +103,9 @@ fourcc = cv2.VideoWriter_fourcc(CODEC[0],CODEC[1],CODEC[2],CODEC[3])
 dimension_img = cv2.imread(dir_yolo+'split_imgs/frame00000.jpg')
 if dimension_img is None:
   print("Could not load ", dir_yolo+'split_imgs/frame00000.jpg')
-vw = dimension_img.shape[1] # use one of the images to determine width and height (in this case img 00000)
+
+vw = dimension_img.shape[1] # Use one of the images to determine width and height (in this case img 00000)
 vh = dimension_img.shape[0] 
-#1920, 1080
 
 
 # Setting at beginning
@@ -181,7 +172,6 @@ for filename in os.listdir(dir_split_imgs):
                 class_ids.append(class_id)
 
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-    #print(indexes)
 
     font = cv2.FONT_HERSHEY_DUPLEX
     pt_radius = 10
