@@ -251,7 +251,7 @@ for filename in os.listdir(dir_split_imgs):
     #cv2.waitKey(0)
     '''WRITE IMG TO VIDEO'''
     vid_img = img
-    writer.write(img) 
+    writer.write(img)
     key = cv2.waitKey(3)#pauses for 3 seconds before fetching next image
 
     if key == 27: #if ESC is pressed, exit loop

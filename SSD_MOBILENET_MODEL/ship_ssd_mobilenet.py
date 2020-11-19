@@ -256,7 +256,7 @@ def show_inference(model, image_path):
 
   #display(Image.fromarray(image_np))
   return image_np
-
+s
 '''
 try:
     if not os.path.exists('analysis_img'):
