@@ -213,19 +213,17 @@ for filename in os.listdir(dir_split_imgs):
                 
                 for tup in line_pts:
                     np.append(pts_arr, tup)
-                
-                # print(len(line_pts))
-                # print(len(pts_arr))
+
                 if first_iter:
                     start_pt_centre = pt_centre
                     
                     start_pt_radius
                     first_iter = False
 
-                cv2.circle(img, pt_centre, pt_radius , pt_colour, -1) # circle dot to track boat
+                cv2.circle(img, pt_centre, pt_radius , pt_colour, -1) # Circle dot to track boat
 
     cv2.circle(img, start_pt_centre, start_pt_radius , pt_colour, -1) # Dot to indicate starting point
-    cv2.putText(img, "START", start_pt_centre, font, 3, (255, 0, 255), 3)    # Text says that this is the first point in the sequence
+    cv2.putText(img, "START", start_pt_centre, font, 3, (255, 0, 255), 3) # Text says that this is the first point in the sequence
 
 
     if (len(line_pts) > 1):  # Only draw the polygon after there are 2 points existing the the array
@@ -242,19 +240,14 @@ for filename in os.listdir(dir_split_imgs):
 
     frame_number += 1
 
-    # When everything done, release the capture
-    
     cv2.destroyAllWindows()
 
-
-    #cv2.imshow("Image", img)  # Display image in a window, can be changed to save to a file
-    #cv2.waitKey(0)
-    '''WRITE IMG TO VIDEO'''
+    # WRITE IMG TO VIDEO
     vid_img = img
     writer.write(img)
-    key = cv2.waitKey(3)#pauses for 3 seconds before fetching next image
+    key = cv2.waitKey(3) # Pauses for 3 seconds before fetching next image
 
-    if key == 27: #if ESC is pressed, exit loop
+    if key == 27: # If ESC is pressed, exit loop
         cv2.destroyAllWindows()
         break
 
@@ -263,13 +256,8 @@ print("Created Images ")
 if len(os.listdir(dir_yolo + "analysed_imgs") ) == 0:
         print("Directory is empty")
 
-
 cv2.destroyAllWindows()
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# print("line_pts:", line_pts)
-# print("pts arr:", pts_arr)
-
-writer.release() # put this at the end so that the file is closed
+writer.release() # Put this at the end so that the file is closed
 
 print("Released video ")
