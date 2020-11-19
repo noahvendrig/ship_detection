@@ -15,12 +15,14 @@ import numpy as np
 import shutil
 from PIL import Image
 
-os.chdir("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL")
+os.chdir("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL") # Set the base directory of the script and where other files will be created
 
 dir_base = r"F:/Users/elect_09l/github/ship_detection"
 dir_yolo = dir_base + "/YOLO_MODEL/"
 
 dir_folder_list = [dir_yolo+"split_imgs", dir_yolo+"analysed_imgs", dir_yolo+"output"]
+
+# Delete the old directories so that all the old images and outputs are deleted, allowing new ones to be created
 def delete_dir():
   for folder in dir_folder_list:
       try:
@@ -31,9 +33,10 @@ def delete_dir():
           
       shutil.rmtree(folder)
 
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
 folder_list = ["split_imgs", "analysed_imgs", "output"]
 
+# Creating the directories for the frames and outputs to be stored in
 def make_dir():
   for folder in folder_list:
     try:
@@ -41,8 +44,9 @@ def make_dir():
             os.makedirs(folder)
     except OSError:
         print ('Error: Creating directory of data: '+folder)
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-def create_images():
+
+# Splitting the video into its individual frames
+def create_images(): 
     cap = cv2.VideoCapture(dir_yolo + "input/" + VIDEO_NAME)
 
     currentFrame = 0
@@ -90,7 +94,6 @@ output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # Loading image :  
-
 dir_split_imgs = dir_yolo + "split_imgs"
 
 frame_number = 0
@@ -117,7 +120,7 @@ if HD_VIDEO == True:
 print(vw)
 print(vh)
 
-fps = 25 # frame rate of output video
+fps = 25 # Frame rate of output video
 
 writer = cv2.VideoWriter("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/output/"+"analysis_vid.avi", fourcc, fps, (vw, vh), True)
 
@@ -125,11 +128,12 @@ line_pts = [] # List of all the points of detection by the model, tuples are add
 
 first_iter = True
 
+# Settings for the "Start Point" (shows the beginning of the path in which the ship moves in)
 start_pt_radius = 15
 start_pt_colour = (23, 144, 255)
 start_pt_centre = (0,0)
 
-for filename in os.listdir(dir_split_imgs):
+for filename in os.listdir(dir_split_imgs): # Iterates through every frame of the input video
 
     filled_number = str(frame_number).zfill(zeroes)
     f = dir_yolo+"split_imgs/frame"+str(filled_number)+".jpg"
@@ -137,7 +141,7 @@ for filename in os.listdir(dir_split_imgs):
     
     assert img is not None, "Image not loaded "+f
 
-    img = cv2.resize(img, (vw,vh), fx=0, fy=0) # resizes image to 1920 * 1080 pixels, Leave none if not setting resolution, fx and fy are scale factors
+    img = cv2.resize(img, (vw,vh), fx=0, fy=0) # Resizes image to 1920 * 1080 pixels, Leave none if not setting resolution, fx and fy are scale factors
     
     height, width, channels = img.shape
 
@@ -226,7 +230,7 @@ for filename in os.listdir(dir_split_imgs):
     name = './analysed_imgs/analysed_frame' + str(currentFrame).zfill(zeroes) + '.jpg'
     print ('Creating... ' + name) #, end='\r')
     
-    cv2.imwrite(name, img)
+    cv2.imwrite(name, img) # Write the analysed image to a file
 
     frame_number += 1
 
