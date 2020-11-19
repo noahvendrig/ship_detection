@@ -101,17 +101,29 @@ fourcc = cv2.VideoWriter_fourcc(CODEC[0],CODEC[1],CODEC[2],CODEC[3])
 
 dimension_img = cv2.imread(dir_yolo+'split_imgs/frame00000.jpg')
 if dimension_img is None:
-  print("Could not load ", dir_yolo+'analysed_imgs/analysed_frame00000.jpg')
+  print("Could not load ", dir_yolo+'split_imgs/frame00000.jpg')
 vw = dimension_img.shape[1] # use one of the images to determine width and height (in this case img 00000)
 vh = dimension_img.shape[0] 
 #1920, 1080
 
+
+
+'''    '''
+HD_VIDEO = True
+'''    '''
+
+if HD_VIDEO == True:
+    vw = 1920
+    vh = 1080 
+
+print(vw)
+print(vh)
+
 fps = 25 # frame rate of output video
 #writer = cv2.VideoWriter(dir_base+"demo.avi", fourcc, fps, (vw, vh), True) # original
 writer = cv2.VideoWriter("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/output/"+"analysis_vid.avi", fourcc, fps, (vw, vh), True)
-####       ####           ####             ####            ####
 
-
+line_pts = []
 
 for filename in os.listdir(dir_split_imgs):
     #img = cv2.imread(os.listdir(filename)) # original line
@@ -127,7 +139,7 @@ for filename in os.listdir(dir_split_imgs):
     
     assert img is not None, "Image not loaded "+f
 
-    img = cv2.resize(img, (1920,1080), fx=0, fy=0) # resizes image to 1920 * 1080 pixels, Leave none if not setting resolution, fx and fy are scale factors
+    img = cv2.resize(img, (vw,vh), fx=0, fy=0) # resizes image to 1920 * 1080 pixels, Leave none if not setting resolution, fx and fy are scale factors
     
     height, width, channels = img.shape
 
@@ -163,36 +175,49 @@ for filename in os.listdir(dir_split_imgs):
                 class_ids.append(class_id)
 
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-    print(indexes)
+    #print(indexes)
+
     #font = cv2.FONT_HERSHEY_DUPLEX
+
     for i in range(len(boxes)):
         if i in indexes:
             x, y, w, h = boxes[i]
             label = str(classes[class_ids[i]])
             rect_colour = colors[class_ids[i]]
             rect_color = (255,0,0)  # Open CV uses BGR format
-            pt_colour = (0,255,0)
+            pt_colour = (0,0,255)
+            poly_colour = (0,255,0)
 
             
             if label == "boat": # Make sure that only detected boats are illustrated
                 cv2.rectangle(img, (x, y), (x + w, y + h), rect_colour, 2) # Draws detection rectangle on detected object
                 # cv2.putText(img, label, (x, y + 30), font, 3, rect_colour, 3)    # Text is not enabled
-
+                
                 pt_x = int(x+w/2)
                 pt_y = int(y+h)
-                pt_centre = (pt_x,pt_y)
+                pt_centre = (pt_x,pt_y) # centre of point to be drawn on image
+
+                line_pts.append(pt_centre)
+
+                pts_arr = np.array(line_pts)
+                pts_arr = pts_arr.reshape((-1,1,2))
                 
+                for tup in line_pts:
+                    np.append(pts_arr, tup)
+                
+                # print(len(line_pts))
+                # print(len(pts_arr))
 
                 cv2.circle(img, pt_centre, 5 ,pt_colour, -1)
-                ''' Code the creation of the tracking points here
-                Should be a circle with -1 thickness (to fill in) so that it looks like a point. Should be placed at the centre bottom of the tracking
-                rectangle.'''
-
+                
+                if (len(line_pts) > 1):  # Only draw the polygon after there are 2 points existing the the array
+                    cv2.polylines(img, [pts_arr], False, poly_colour, 3)
+                
     currentFrame = frame_number
 
     # Saves image of the current frame in jpg file
     name = './analysed_imgs/analysed_frame' + str(currentFrame).zfill(zeroes) + '.jpg'
-    print ('Creating... ' + name, end='\r')
+    print ('Creating... ' + name) #, end='\r')
     
     cv2.imwrite(name, img)
 
@@ -201,23 +226,21 @@ for filename in os.listdir(dir_split_imgs):
     # When everything done, release the capture
     
     cv2.destroyAllWindows()
-    #print("Created Images ")
 
-    ''' Somewhere here grab the (x,y) of the tracking circle/point created earlier and add to a list/array? of coordinates to draw an unclosed polygon
-    this means that the path of the boats can be traced live (draw the polygon during every step of the loop)'''
 
     #cv2.imshow("Image", img)  # Display image in a window, can be changed to save to a file
     #cv2.waitKey(0)
     '''WRITE IMG TO VIDEO'''
     vid_img = img
-    #writer.write(vid_img) 
+    writer.write(img) 
     key = cv2.waitKey(3)#pauses for 3 seconds before fetching next image
 
     if key == 27: #if ESC is pressed, exit loop
         cv2.destroyAllWindows()
         break
 
-    
+print("Created Images ")
+
 if len(os.listdir(dir_yolo + "analysed_imgs") ) == 0:
         print("Directory is empty")
 
@@ -225,6 +248,9 @@ if len(os.listdir(dir_yolo + "analysed_imgs") ) == 0:
 cv2.destroyAllWindows()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# print("line_pts:", line_pts)
+# print("pts arr:", pts_arr)
 
 writer.release() # put this at the end so that the file is closed
+
 print("Released video ")
