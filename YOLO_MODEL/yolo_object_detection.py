@@ -1,18 +1,24 @@
+
+# Settings
+HD_VIDEO = True # Whether the output video is in native resolution or in 1920 * 1080p
+VIDEO_NAME = "Boat_Animation.mp4" # Input video for analysis
+
+BOOL_DELETE_DIR = True # Delete any old images created from the program
+BOOL_MAKE_DIR = True # If BOOL_DELETE_DIR == True then leave as True to create the directories you just deleted
+BOOL_CREATE_IMAGES = True # Split the input image into the individual frames so they can be analysed, only turn off if the frames already exist
+zeroes = 5 # Amount of zeroes to be filled for the frame numbers
+BOOL_BOXES = False # Do you want the detection boxes to be on?
+
 import os
 import cv2
 import numpy as np
 import shutil
 from PIL import Image
 
-print(cv2.__version__)
-
-###
 os.chdir("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL")
-###
 
 dir_base = r"F:/Users/elect_09l/github/ship_detection"
 dir_yolo = dir_base + "/YOLO_MODEL/"
-
 
 dir_folder_list = [dir_yolo+"split_imgs", dir_yolo+"analysed_imgs", dir_yolo+"output"]
 def delete_dir():
@@ -37,7 +43,7 @@ def make_dir():
         print ('Error: Creating directory of data: '+folder)
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 def create_images():
-    cap = cv2.VideoCapture(dir_yolo + "input/" + "Patea_Bar_Crossing.mp4")
+    cap = cv2.VideoCapture(dir_yolo + "input/" + VIDEO_NAME)
 
     currentFrame = 0
 
@@ -47,7 +53,7 @@ def create_images():
         if(ret == False):
             break
         # Saves image of the current frame in jpg file
-        name = './split_imgs/frame' + str(currentFrame).zfill(5) + '.jpg'
+        name = './split_imgs/frame' + str(currentFrame).zfill(zeroes) + '.jpg'
         print ('Creating...' + name, end='\r')
         
         cv2.imwrite(name, frame)
@@ -64,10 +70,14 @@ def create_images():
         print("Directory is empty")
 
 
+
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-# delete_dir()
-# make_dir()
-# create_images()
+if BOOL_DELETE_DIR:
+    delete_dir()
+if BOOL_MAKE_DIR:    
+    make_dir()
+if BOOL_CREATE_IMAGES:
+    create_images()
 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
@@ -92,7 +102,7 @@ import pathlib
 contents = pathlib.Path("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/split_imgs").iterdir()
 
 frame_number = 0
-zeroes = 5
+
 
 #### ~~ADDING EACH ANALYSED FRAME TO THE OUTPUT (VIDEO)~~ ####
 CODEC = "MJPG"
@@ -107,10 +117,7 @@ vh = dimension_img.shape[0]
 #1920, 1080
 
 
-
-'''    '''
-HD_VIDEO = True
-'''    '''
+# Setting at beginning
 
 if HD_VIDEO == True:
     vw = 1920
@@ -120,19 +127,19 @@ print(vw)
 print(vh)
 
 fps = 25 # frame rate of output video
-#writer = cv2.VideoWriter(dir_base+"demo.avi", fourcc, fps, (vw, vh), True) # original
+
 writer = cv2.VideoWriter("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/output/"+"analysis_vid.avi", fourcc, fps, (vw, vh), True)
 
-line_pts = []
+line_pts = [] # List of all the points of detection by the model, tuples are added through each iteration of the loop below
+
+first_iter = True
+
+start_pt_radius = 15
+start_pt_colour = (23, 144, 255)
+start_pt_centre = (0,0)
 
 for filename in os.listdir(dir_split_imgs):
-    #img = cv2.imread(os.listdir(filename)) # original line
 
-    # img = cv2.imread(dir_yolo+"/split_imgs/frame00000.jpg")
-    #if (frame_number != 0):
-    #    zeroes = 5-len(str(frame_number))
-
-    # img = cv2.imread(dir_yolo+"split_imgs/frame"+str(zeroes)+str(frame_number)+".jpg")
     filled_number = str(frame_number).zfill(zeroes)
     f = dir_yolo+"split_imgs/frame"+str(filled_number)+".jpg"
     img = cv2.imread(f)
@@ -142,7 +149,6 @@ for filename in os.listdir(dir_split_imgs):
     img = cv2.resize(img, (vw,vh), fx=0, fy=0) # resizes image to 1920 * 1080 pixels, Leave none if not setting resolution, fx and fy are scale factors
     
     height, width, channels = img.shape
-
 
     # Detecting objects
     blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
@@ -177,8 +183,9 @@ for filename in os.listdir(dir_split_imgs):
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     #print(indexes)
 
-    #font = cv2.FONT_HERSHEY_DUPLEX
-
+    font = cv2.FONT_HERSHEY_DUPLEX
+    pt_radius = 10
+    
     for i in range(len(boxes)):
         if i in indexes:
             x, y, w, h = boxes[i]
@@ -190,8 +197,10 @@ for filename in os.listdir(dir_split_imgs):
 
             
             if label == "boat": # Make sure that only detected boats are illustrated
-                cv2.rectangle(img, (x, y), (x + w, y + h), rect_colour, 2) # Draws detection rectangle on detected object
-                # cv2.putText(img, label, (x, y + 30), font, 3, rect_colour, 3)    # Text is not enabled
+                if(BOOL_BOXES):
+                    cv2.rectangle(img, (x, y), (x + w, y + h), rect_colour, 2) # Draws detection rectangle on detected object
+
+                # cv2.putText(img, label, (x, y + 30), font, 3, rect_colour, 3)    # Text says what the image is (boat, person, etc.)
                 
                 pt_x = int(x+w/2)
                 pt_y = int(y+h)
@@ -207,12 +216,22 @@ for filename in os.listdir(dir_split_imgs):
                 
                 # print(len(line_pts))
                 # print(len(pts_arr))
+                if first_iter:
+                    start_pt_centre = pt_centre
+                    
+                    start_pt_radius
+                    first_iter = False
 
-                cv2.circle(img, pt_centre, 5 ,pt_colour, -1)
-                
-                if (len(line_pts) > 1):  # Only draw the polygon after there are 2 points existing the the array
-                    cv2.polylines(img, [pts_arr], False, poly_colour, 3)
-                
+                cv2.circle(img, pt_centre, pt_radius , pt_colour, -1) # circle dot to track boat
+
+    cv2.circle(img, start_pt_centre, start_pt_radius , pt_colour, -1) # Dot to indicate starting point
+    cv2.putText(img, "START", start_pt_centre, font, 3, (255, 0, 255), 3)    # Text says that this is the first point in the sequence
+
+
+    if (len(line_pts) > 1):  # Only draw the polygon after there are 2 points existing the the array
+        cv2.polylines(img, [pts_arr], False, poly_colour, 3)
+
+    
     currentFrame = frame_number
 
     # Saves image of the current frame in jpg file
