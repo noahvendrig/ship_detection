@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import shutil
+from PIL import Image
 
 print(cv2.__version__)
 
@@ -86,73 +87,31 @@ colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 dir_split_imgs = dir_yolo + "split_imgs"
 
-
-'''
-def img_analysis(img):
-    img = img
-    #img = cv2.imread(dir_yolo+"/split_imgs/two-friends-sq.jpg")
-    img = cv2.resize(img, None, fx=0.4, fy=0.4)
-    height, width, channels = img.shape
-
-    # Detecting objects
-    blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-
-    net.setInput(blob)
-    outs = net.forward(output_layers)
-
-    # Showing informations on the screen
-    class_ids = []
-    confidences = []
-    boxes = []
-    for out in outs:
-        for detection in out:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if confidence > 0.5:
-                # Object detected
-                center_x = int(detection[0] * width)
-                center_y = int(detection[1] * height)
-                w = int(detection[2] * width)
-                h = int(detection[3] * height)
-
-                # Rectangle coordinates
-                x = int(center_x - w / 2)
-                y = int(center_y - h / 2)
-
-                boxes.append([x, y, w, h])
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
-
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-    print(indexes)
-    #font = cv2.FONT_HERSHEY_DUPLEX
-    for i in range(len(boxes)):
-        if i in indexes:
-            x, y, w, h = boxes[i]
-            #label = str(classes[class_ids[i]])
-            #color = colors[class_ids[i]]
-            color = 5000
-
-            cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-            # cv2.putText(img, label, (x, y + 30), font, 3, color, 3)    # Text is not enabled
-
-
-    cv2.imwrite(dir_split_imgs, img )
-
-
-
-
-    #cv2.imshow("Image", img)  # Display image in a window, can be changed to save to a file
-    #cv2.waitKey(0)
-'''
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 import pathlib
 contents = pathlib.Path("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/split_imgs").iterdir()
 
 frame_number = 0
 zeroes = 5
+
+#### ~~ADDING EACH ANALYSED FRAME TO THE OUTPUT (VIDEO)~~ ####
+CODEC = "MJPG"
+assert len(CODEC)==4,"FOURCC code needs to have exactly four characters"
+fourcc = cv2.VideoWriter_fourcc(CODEC[0],CODEC[1],CODEC[2],CODEC[3])
+
+dimension_img = cv2.imread(dir_yolo+'split_imgs/frame00000.jpg')
+if dimension_img is None:
+  print("Could not load ", dir_yolo+'analysed_imgs/analysed_frame00000.jpg')
+vw = dimension_img.shape[1] # use one of the images to determine width and height (in this case img 00000)
+vh = dimension_img.shape[0] 
+#1920, 1080
+
+fps = 25 # frame rate of output video
+#writer = cv2.VideoWriter(dir_base+"demo.avi", fourcc, fps, (vw, vh), True) # original
+writer = cv2.VideoWriter("F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/output/"+"analysis_vid.avi", fourcc, fps, (vw, vh), True)
+####       ####           ####             ####            ####
+
+
 
 for filename in os.listdir(dir_split_imgs):
     #img = cv2.imread(os.listdir(filename)) # original line
@@ -168,9 +127,7 @@ for filename in os.listdir(dir_split_imgs):
     
     assert img is not None, "Image not loaded "+f
 
-
-
-    img = cv2.resize(img, None, fx=0.4, fy=0.4)
+    img = cv2.resize(img, (1920,1080), fx=0, fy=0) # resizes image to 1920 * 1080 pixels, Leave none if not setting resolution, fx and fy are scale factors
     
     height, width, channels = img.shape
 
@@ -211,15 +168,25 @@ for filename in os.listdir(dir_split_imgs):
     for i in range(len(boxes)):
         if i in indexes:
             x, y, w, h = boxes[i]
-            #label = str(classes[class_ids[i]])
-            #color = colors[class_ids[i]]
-            color = 5000
+            label = str(classes[class_ids[i]])
+            rect_colour = colors[class_ids[i]]
+            rect_color = (255,0,0)  # Open CV uses BGR format
+            pt_colour = (0,255,0)
 
-            cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-            # cv2.putText(img, label, (x, y + 30), font, 3, color, 3)    # Text is not enabled
+            
+            if label == "boat": # Make sure that only detected boats are illustrated
+                cv2.rectangle(img, (x, y), (x + w, y + h), rect_colour, 2) # Draws detection rectangle on detected object
+                # cv2.putText(img, label, (x, y + 30), font, 3, rect_colour, 3)    # Text is not enabled
 
+                pt_x = int(x+w/2)
+                pt_y = int(y+h)
+                pt_centre = (pt_x,pt_y)
+                
 
-    #cv2.imwrite(dir_analysed_imgs, img )
+                cv2.circle(img, pt_centre, 5 ,pt_colour, -1)
+                ''' Code the creation of the tracking points here
+                Should be a circle with -1 thickness (to fill in) so that it looks like a point. Should be placed at the centre bottom of the tracking
+                rectangle.'''
 
     currentFrame = frame_number
 
@@ -234,11 +201,22 @@ for filename in os.listdir(dir_split_imgs):
     # When everything done, release the capture
     
     cv2.destroyAllWindows()
-    print("Created Images ")
+    #print("Created Images ")
 
+    ''' Somewhere here grab the (x,y) of the tracking circle/point created earlier and add to a list/array? of coordinates to draw an unclosed polygon
+    this means that the path of the boats can be traced live (draw the polygon during every step of the loop)'''
 
     #cv2.imshow("Image", img)  # Display image in a window, can be changed to save to a file
     #cv2.waitKey(0)
+    '''WRITE IMG TO VIDEO'''
+    vid_img = img
+    #writer.write(vid_img) 
+    key = cv2.waitKey(3)#pauses for 3 seconds before fetching next image
+
+    if key == 27: #if ESC is pressed, exit loop
+        cv2.destroyAllWindows()
+        break
+
     
 if len(os.listdir(dir_yolo + "analysed_imgs") ) == 0:
         print("Directory is empty")
@@ -246,4 +224,7 @@ if len(os.listdir(dir_yolo + "analysed_imgs") ) == 0:
 
 cv2.destroyAllWindows()
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+writer.release() # put this at the end so that the file is closed
+print("Released video ")
