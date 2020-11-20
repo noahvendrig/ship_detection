@@ -1,7 +1,7 @@
 
 # Settings
 HD_VIDEO = True # Whether the output video is in native resolution or in 1920 * 1080p
-VIDEO_NAME = "Boat_Animation.mp4" # Input video for analysis
+VIDEO_NAME = "Patea_Bar_Crossing.mp4" # Input video for analysis
 
 BOOL_DELETE_DIR = True # Delete any old images created from the program
 BOOL_MAKE_DIR = True # If BOOL_DELETE_DIR == True then leave as True to create the directories you just deleted
