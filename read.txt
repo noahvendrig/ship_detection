@@ -1,0 +1,20 @@
+READ THIS BEFORE YOU DO ANYTHING BECAUSE I HAVE LITTLE FAITH
+
+- make sure to change all the directories (incl. that of the 'yolov3.weights' file since I kept that in a separate folder to the rest of the model
+- folders for splitting images, analysed images and output video will be created by the program unless the bools at the top of the .py file are changed
+- directory for input is set to 'input'
+-everything is ....../ship_detection/YOLO_MODEL/.... this can be changed just keep it in mind again
+
+
+- Will take a video as input, find and detect a ship present, then track its path using dots and lines (start point is indicated)
+- Uses YOLOv3 Model (open source)
+
+
+For Future:
+- End point of the ship in frame could also be detected
+- Make the program able to track several different ships/boats (not sure what would happen with >1 boat present in the image)
+- Force the model to use GPU for image processing (CPU is default however I have seen a web results mentioning the possibility of changing to GPU)
+- Find footage where the camera remains stationary (e.g swellnet cameras)
+- Make another program that uses the paths of the ships (across a period of time, e.g a day) to guess where the sand bars are.
+- Use the paths of the ships (across a period of time, e.g a day) to form a curve of best fit as the best estimation for a safe path (this may be more accurate than the option above since its hard to actually know where the sandbars are)
+- Also consider the possibility that ships may even just go through the sandbar, so if there is a prediction system for location of sandbar or safe path, it needs to ignore outliers such as a ship charging through the sand bar.
