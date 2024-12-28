@@ -1,6 +1,6 @@
 # Settings
 HD_VIDEO = True  # Whether the output video is in native resolution or in 1920 * 1080p
-VIDEO_NAME = "speedboat.mp4"  # Input video for analysis, must be in 'input' folder unless changed
+VIDEO_NAME = "large.mp4"  # Input video for analysis, must be in 'input' folder unless changed
 
 BOOL_DELETE_DIR = True  # Delete any old images created from the program
 BOOL_MAKE_DIR = True  # If BOOL_DELETE_DIR == True then leave as True to create the directories you just deleted
@@ -13,12 +13,14 @@ import cv2
 import numpy as np
 import shutil
 from PIL import Image
+from scipy.interpolate import make_interp_spline
 
 os.chdir(
-    "F:/Users/elect_09l/github/ship_detection/YOLO_MODEL"
+    "D:/Github/ship_detection/YOLO_MODEL"
 )  # Set the base directory of the script and where other files will be created
 
-dir_base = r"F:/Users/elect_09l/github/ship_detection"
+# dir_base = r"F:/Users/elect_09l/github/ship_detection"
+dir_base = r"D:/Github/ship_detection"
 dir_yolo = dir_base + "/YOLO_MODEL/"
 
 dir_folder_list = [
@@ -87,6 +89,23 @@ if BOOL_MAKE_DIR:
 if BOOL_CREATE_IMAGES:
     create_images()
 
+def get_output_layers(net):
+    try:
+        layer_names = net.getLayerNames()
+        output_layers = net.getUnconnectedOutLayers()
+        
+        # Handle different OpenCV versions
+        if isinstance(output_layers[0], list) or isinstance(output_layers[0], tuple):
+            # For older OpenCV versions
+            return [layer_names[i[0] - 1] for i in output_layers]
+        else:
+            # For newer OpenCV versions
+            return [layer_names[i - 1] for i in output_layers]
+    except Exception as e:
+        print(f"Error getting output layers: {e}")
+        return []
+
+
 
 # Load YOLO Model
 net = cv2.dnn.readNet(
@@ -97,7 +116,10 @@ classes = []
 with open(dir_yolo + "coco.names", "r") as f:
     classes = [line.strip() for line in f.readlines()]
 layer_names = net.getLayerNames()
-output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+
+output_layers = get_output_layers(net)
+if not output_layers:
+    raise RuntimeError("Failed to get network output layers")
 colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # Loading image :
@@ -132,7 +154,7 @@ print(vh)
 fps = 25  # Frame rate of output video
 
 writer = cv2.VideoWriter(
-    "F:/Users/elect_09l/github/ship_detection/YOLO_MODEL/output/" + "analysis_vid.avi",
+    "D:/Github/ship_detection/YOLO_MODEL/output/" + "analysis_vid.avi",
     fourcc,
     fps,
     (vw, vh),
@@ -149,6 +171,14 @@ first_iter = True
 start_pt_radius = 15
 start_pt_colour = (23, 144, 255)
 start_pt_centre = (0, 0)
+
+def smooth(y, box_pts):
+    box = np.ones(box_pts)/box_pts
+    y_smooth = np.convolve(y, box, mode='valid')  # Change to 'valid' mode
+    # Pad with original values to maintain array length
+    pad_size = (box_pts - 1) // 2
+    y_smooth = np.concatenate([y[:pad_size], y_smooth, y[-pad_size:]])
+    return y_smooth
 
 for filename in os.listdir(
     dir_split_imgs
@@ -248,10 +278,28 @@ for filename in os.listdir(
         img, "START", start_pt_centre, font, 3, (255, 0, 255), 3
     )  # Text says that this is the first point in the sequence
 
-    if (
-        len(line_pts) > 1
-    ):  # Only draw the polygon after there are 2 points existing the the array
-        cv2.polylines(img, [pts_arr], False, poly_colour, 3)
+    # if (
+    #     len(line_pts) > 1
+    # ):  # Only draw the polygon after there are 2 points existing the the array
+    #     cv2.polylines(img, [pts_arr], False, poly_colour, 3)
+
+
+    if len(line_pts) > 2:
+        # print(line_pts)
+        # Convert points to numpy arrays
+        pts_x = np.array([pt[0] for pt in line_pts])
+        pts_y = np.array([pt[1] for pt in line_pts])
+ 
+        
+        # Apply smoothing (adjust box_pts value for different smoothing levels)
+        smooth_x = smooth(pts_x, 10)
+        smooth_y = smooth(pts_y, 10)
+        
+        # Combine back into points array
+        smooth_pts = np.column_stack((smooth_x, smooth_y)).astype(np.int32)
+        
+        # # Draw smoothed polyline
+        cv2.polylines(img, [smooth_pts[5:]], False, poly_colour, 3)
 
     currentFrame = frame_number
 
